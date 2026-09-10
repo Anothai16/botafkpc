@@ -2,13 +2,14 @@ const http = require('http');
 const os = require('os');
 const mineflayer = require('mineflayer');
 const minecraftData = require('minecraft-data');
-const localtunnel = require('localtunnel');
 
 const SERVER_HOST = 'play.amorycraft.com';
 const SERVER_PORT = 25565;
 const DEFAULT_PASSWORD = '112233';
 const MC_VERSION = '1.20.1';
-const WEB_PORT = 3000;
+
+// 📌 ใช้ Port จาก Environment ของโฮสต์ หรือกำหนดพอร์ตจากแท็บ Network ตรงนี้
+const WEB_PORT = process.env.PORT || 3000;
 
 const sharedData = minecraftData(MC_VERSION);
 
@@ -676,20 +677,8 @@ const server = http.createServer((req, res) => {
     `);
 });
 
-server.listen(WEB_PORT, async () => {
+server.listen(WEB_PORT, () => {
     log(`==================================================`);
-    log(`🚀 BOT SERVER RUNNING ON PORT ${WEB_PORT}`);
-    
-    // 🌐 เชื่อมต่อ LocalTunnel ดึง Public URL ให้กดเข้าใช้งานผ่านเน็ตได้จากทุกที่
-    try {
-        const tunnel = await localtunnel({ port: WEB_PORT });
-        log(`🌐 Public Web Dashboard: ${tunnel.url}`);
-        
-        tunnel.on('close', () => {
-            logError('[!] Tunnel ปิดตัวลง กำลังลองเปิดใหม่...');
-        });
-    } catch (err) {
-        logError(`[-] สร้าง Tunnel ล้มเหลว: ${err.message}`);
-    }
+    log(`🚀 LOW-RESOURCE BOT SERVER RUNNING ON PORT ${WEB_PORT}`);
     log(`==================================================`);
 });

@@ -1,19 +1,12 @@
 {
   "name": "bot-pumpkin",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --max-old-space-size=200 index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "mineflayer": "^4.20.1",
-    "minecraft-data": "^3.45.0",
-    "localtunnel": "^2.0.2"
+    "mineflayer": "4.20.1",
+    "minecraft-data": "3.45.0"
   }
 }
