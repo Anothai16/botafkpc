@@ -2,6 +2,7 @@ const http = require('http');
 const os = require('os');
 const mineflayer = require('mineflayer');
 const minecraftData = require('minecraft-data');
+const localtunnel = require('localtunnel');
 
 const SERVER_HOST = 'play.amorycraft.com';
 const SERVER_PORT = 25565;
@@ -239,26 +240,23 @@ function createBotInstance(username, delayMs = 0) {
         const botPassword = botConfig ? botConfig.pass : DEFAULT_PASSWORD;
         const randomEmail = generateHumanLikeEmail();
 
-        // ⚡ ปรับแต่ง Client ให้กินทรัพยากรต่ำที่สุดเท่าที่จะทำได้
         const bot = mineflayer.createBot({
             host: SERVER_HOST,
             port: SERVER_PORT,
             username: username,
             version: MC_VERSION,
             data: sharedData,
-            physicsEnabled: false,      // ปิดระบบฟิสิกส์ทั้งหมด
-            viewDistance: 'tiny',       // โหลด Chunk สั้นสุด
+            physicsEnabled: false,
+            viewDistance: 'tiny',
             checkTimeoutInterval: 60000
         });
 
-        // ⚡ ป้องกัน Memory Leak: ไม่เก็บข้อมูล Entity ตัวอื่นในเซิร์ฟเวอร์
         bot.on('entitySpawn', (entity) => {
             if (entity !== bot.entity) delete bot.entities[entity.id];
         });
 
         if (bot._client) {
             bot._client.on('packet', (data, metadata) => {
-                // ⚡ ตรวจจับบิทด้วย Event Driven ทันทีที่แพ็กเก็ตมา ไม่ต้องใช้ setInterval วนลูป
                 if (metadata.name === 'teams' || metadata.name === 'scoreboard_team' || metadata.name === 'scoreboard_score') {
                     try {
                         const rawStrings = extractAllStrings(data).join(' ');
@@ -272,7 +270,6 @@ function createBotInstance(username, delayMs = 0) {
                     } catch (e) {}
                 }
 
-                // ⚡ ทิ้งแพ็กเก็ตเอฟเฟกต์และเสียงเพื่อลดโหลด CPU
                 if (metadata.name.includes('particle') || metadata.name.includes('sound') || metadata.name.includes('light')) {
                     metadata.size = 0;
                     return false;
@@ -331,7 +328,6 @@ function createBotInstance(username, delayMs = 0) {
                                 log(`[✓] [${username}] ประจำการใน Survival และพิมพ์ /afk เรียบร้อย!`);
                                 updateStatus(username, 'Online (AFK)', 'ออนไลน์ปกติ (/afk)');
 
-                                // ขยับมุมมองเบาๆ ทุก 60 วินาทีป้องกัน Timeout
                                 if (bot.afkInterval) clearInterval(bot.afkInterval);
                                 bot.afkInterval = setInterval(() => {
                                     try { bot.look(bot.entity.yaw + 0.05, bot.entity.pitch, true); } catch (e) {}
@@ -680,21 +676,20 @@ const server = http.createServer((req, res) => {
     `);
 });
 
-function getLocalIP() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return '127.0.0.1';
-}
-
-server.listen(WEB_PORT, () => {
+server.listen(WEB_PORT, async () => {
     log(`==================================================`);
-    log(`🚀 LOW-RESOURCE BOT SERVER RUNNING ON PORT ${WEB_PORT}`);
-    log(`🌐 Dashboard URL: http://${getLocalIP()}:${WEB_PORT}`);
+    log(`🚀 BOT SERVER RUNNING ON PORT ${WEB_PORT}`);
+    
+    // 🌐 เชื่อมต่อ LocalTunnel ดึง Public URL ให้กดเข้าใช้งานผ่านเน็ตได้จากทุกที่
+    try {
+        const tunnel = await localtunnel({ port: WEB_PORT });
+        log(`🌐 Public Web Dashboard: ${tunnel.url}`);
+        
+        tunnel.on('close', () => {
+            logError('[!] Tunnel ปิดตัวลง กำลังลองเปิดใหม่...');
+        });
+    } catch (err) {
+        logError(`[-] สร้าง Tunnel ล้มเหลว: ${err.message}`);
+    }
     log(`==================================================`);
 });
