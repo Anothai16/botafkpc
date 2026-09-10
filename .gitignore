@@ -1,0 +1,22 @@
+# ไฟล์เก็บความลับ/รหัสผ่าน (สำคัญมาก ห้ามอัพเด็ดขาด!)
+.env
+.env.local
+config.json
+
+# โฟลเดอร์ดาวน์โหลด Library ของโปรแกรม (มันใหญ่เกินไป)
+node_modules/
+vendor/
+
+# ไฟล์ขยะของระบบปฏิบัติการ
+.DS_Store
+Thumbs.db
+
+# โฟลเดอร์ที่เกิดจากการ Build หรือ Compile งาน
+dist/
+build/
+out/
+*.log
+
+backup/
+
+progress*
